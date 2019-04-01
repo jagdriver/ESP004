@@ -5,6 +5,8 @@
 //
 // Niels J. Nielsen
 // WaveSnake 2018-01-19
+// Moved from Visual Studio Community / VisualMicro to
+// Visual Studio Code / Arduino 2019-03-31
 // -------------------------------
 #include <errno.h>
 #include <ESP8266WiFi.h>

@@ -3,5 +3,6 @@
     "configuration": "xtal=80,vt=flash,exception=disabled,eesz=4M3M,ip=lm2f,dbg=Disabled,lvl=None____,wipe=none,baud=115200",
     "sketch": "ESP004.ino",
     "port": "/dev/cu.usbserial-A105BOQU",
-    "output": "../ArduinoOutput"
+    "output": "../ArduinoOutput",
+    "programmer": "AVRISP mkII"
 }
