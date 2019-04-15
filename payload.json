@@ -1,0 +1,20 @@
+{
+	"accountid":"BA57D00A15054C2C",
+	"accessoryid":"3B72D2E2888B13D5",
+	"accessoryname":"ESP004",
+	"accessorytype":"temp",
+	"sketchname":"ESP004",
+	"messagetype":"config",
+	"items":"2",
+	"data":[
+			{
+				"name":"updateconfig",
+				"value":""
+			},
+			{
+				"name":"mqttserver",
+				"value":"192.168.1.232"
+			}
+		]
+}
+

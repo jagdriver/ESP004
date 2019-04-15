@@ -41,7 +41,7 @@ unsigned long ticsAtNTPUpdate = 0;
 unsigned long ticsAjustment = 3000;
 
 // Configuration
-WSESPConfig * cnfg;
+WSESPConfig *cnfg;
 
 // WiFi
 WiFiClient wifiClient;
@@ -59,11 +59,35 @@ const int MQTT_BUFFER_SIZE = 1500;
 //enum msgCommand { UPDATE = 0, RESET = 1, SLEEP = 2, CONFIG = 3, STATE = 4, CLOSE = 5, OPEN = 6, OFF = 7, ON = 8, TEST = 9, START = 10, STOP = 11 } cmd;
 //enum msgComponent { TEMP = 0, TEMPHUM = 1, GATE = 2, RELAY = 3, GASRELAY = 4, SWITCH = 5, BURNER = 6 };
 
-enum Commands {DATA = 0, STATE = 1, UPDATE = 2, CONFIG = 3, ACTION = 4 };
-String commands[1][20] = { "DATA", "STATE", "UPDATE", "CONFIG", "ACTION" };
+enum Commands
+{
+	DATA = 0,
+	STATE = 1,
+	UPDATE = 2,
+	CONFIG = 3,
+	ACTION = 4
+};
+String commands[1][20] = {"DATA", "STATE", "UPDATE", "CONFIG", "ACTION"};
 
-enum SubCommand { UPDATECONFIG = 0, READCONFIG = 1, SENDDATA = 2, SENDSTATE = 3, UPDATESKETCH = 4, RESET = 5, UPDATETIMER = 6, START = 7, STOP = 8, ON = 9, OFF = 10, OPEN = 11, CLOSE = 12, SLEEP = 13, WAKEUP = 14};
-String subCommands[1][20] = { "UPDATECONFIG", "READCONFIG", "SENDDATA", "SENDSTATE", "UPDATESKETCH", "RESET", "UPDATETIMER", "START", "STOP", "ON", "OFF", "OPEN", "CLOSE", "SLEEP", "WAKEUP"};
+enum SubCommand
+{
+	UPDATECONFIG = 0,
+	READCONFIG = 1,
+	SENDDATA = 2,
+	SENDSTATE = 3,
+	UPDATESKETCH = 4,
+	RESET = 5,
+	UPDATETIMER = 6,
+	START = 7,
+	STOP = 8,
+	ON = 9,
+	OFF = 10,
+	OPEN = 11,
+	CLOSE = 12,
+	SLEEP = 13,
+	WAKEUP = 14
+};
+String subCommands[1][20] = {"UPDATECONFIG", "READCONFIG", "SENDDATA", "SENDSTATE", "UPDATESKETCH", "RESET", "UPDATETIMER", "START", "STOP", "ON", "OFF", "OPEN", "CLOSE", "SLEEP", "WAKEUP"};
 
 // DHT22 Temp sensor
 SimpleDHT22 dht22;
@@ -120,7 +144,7 @@ void ntp_Update()
 	// Get NTP time server IP
 	WiFi.hostByName(cnfg->GetConfigString("ntphost").c_str(), timeServerIP);
 
-	// Get NTP Time 
+	// Get NTP Time
 	ntpTime.ReadNTPTime(cnfg->GetConfigString("ntphost").c_str(), timeServerIP);
 	ticsAtNTPUpdate = millis();
 }
@@ -152,7 +176,8 @@ void temp_Update()
 
 	// Publish temperature to message broker
 	String sTopic = cnfg->GetConfigString("account") + "/" +
-		cnfg->GetConfigString("accessorytype") + "/" + cnfg->GetConfigString("accessoryid");
+    					cnfg->GetConfigString("accessorytype") + "/" + cnfg->GetConfigString("accessoryid");
+    
 
 	String sPayload = temperaturePayload(
 		temperature,
@@ -160,10 +185,8 @@ void temp_Update()
 		strtod(cnfg->GetConfigString("accessorymintemp").c_str(), 0),
 		strtod(cnfg->GetConfigString("accessorymaxtemp").c_str(), 0));
 
-	
 	if (mqttClient.publish(sTopic.c_str(), sPayload.c_str()))
 	{
-		
 		Serial.println("\nPublishing temp/hum: " + String(temperature) + " - " + String(humidity) + " - " + ntpTime.GetTimeString());
 	}
 
@@ -172,19 +195,17 @@ void temp_Update()
 	//	cnfg->GetConfigString("accessoryroomid") + "/" +
 	//	cnfg->GetConfigString("accessoryid") + "/configuration";
 
-	// Here we must send the data and then decide if we also should sen a command
+	// Here we must send the data and then decide if we also should send a command
 	// to inform about the state
 	//
-	sTopic = cnfg->GetConfigString("account") + "/" +
-		"command" + "/" + "98B4876540B7202E"; 
-	// (Gas Burnet AccessoryId)
+	sTopic = cnfg->GetConfigString("account") + "/" + "command" + "/" + "98B4876540B7202E";
+	// (Gas Burner AccessoryId)
 
 	if (temperature > strtod(cnfg->GetConfigString("accessorymaxtemp").c_str(), 0)) //set_temp)
 	{
 		// stop gas burner
 		sPayload = commandPayload("stop");
 		mqttClient.publish(sTopic.c_str(), sPayload.c_str());
-		
 	}
 
 	if (temperature < strtod(cnfg->GetConfigString("accessorymintemp").c_str(), 0)) //set_temp)
@@ -204,14 +225,13 @@ void config_Update()
 	// Read configuration from REST server
 }
 
-
 #pragma endregion
 
 #pragma region OTA software Update
 
 void ota_Update()
 {
-	ESPhttpUpdate.update(cnfg->GetConfigString("sketchserver"),cnfg->GetConfigStringAsUint16("sketchserverport"), cnfg->GetConfigString("sketchbin"));
+	ESPhttpUpdate.update(cnfg->GetConfigString("sketchserver"), cnfg->GetConfigStringAsUint16("sketchserverport"), cnfg->GetConfigString("sketchbin"));
 
 	if (ESPhttpUpdate.getLastError() == 0)
 	{
@@ -273,8 +293,7 @@ int getSubCommand(String command)
 	}
 	return 0;
 }
-
-void mqttCallback(char* topic, byte* payload, unsigned int length)
+void mqttCallback(char *topic, byte *payload, unsigned int length)
 {
 	//
 	// Here we receive MQTT messages
@@ -284,12 +303,14 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 
 	StaticJsonBuffer<MQTT_BUFFER_SIZE> jsonBuffer;
 	payload[length] = '\0';
-	String s = String((char*)payload);
-	JsonObject& root = jsonBuffer.parse(s);
+	String s = String((char *)payload);
+	JsonObject &root = jsonBuffer.parse(s);
+
+
 
 	//Serial.printf("\nTopic received: %s", topic);
 	//Serial.printf("\nPayload received: %s", s.c_str());
-	
+
 	String accessoryId = root.get<String>("accessoryid");
 	String messageType = root.get<String>("messagetype");
 	int cmd = getCommand(root.get<String>("messagetype"));
@@ -300,8 +321,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 	//int numberOfElements = root["data"].size();
 	//Serial.printf("\nNumber of data elements: %i", numberOfElements);
 
-	JsonObject& commandElement = root["data"][0];
-	JsonObject& dataElement = root["data"][1];
+	JsonObject &commandElement = root["data"][0];
+	JsonObject &dataElement = root["data"][1];
 
 	String commandName = commandElement["name"];
 	String commandValue = commandElement["value"];
@@ -345,7 +366,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 		switch (subcmd)
 		{
 		case SENDSTATE:
-			// Here we send the current state 
+			// Here we send the current state
 			Serial.println("\nSendState Command received");
 			break;
 		default:
@@ -374,12 +395,12 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 		switch (subcmd)
 		{
 		case UPDATECONFIG:
-			// Here we update the config 
-			cnfg->SetConfigString(dataName,dataValue);
+			// Here we update the config
+			cnfg->SetConfigString(dataName, dataValue);
 			cnfg->SaveConfig("/ESP01.txt");
 			break;
 		case READCONFIG:
-			// Here we read and send the config 
+			// Here we read and send the config
 			Serial.println("\nREADCONFIG Command.......");
 			break;
 		}
@@ -389,7 +410,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 		switch (subcmd)
 		{
 		case START:
-			// Here we start the measurement 
+			// Here we start the measurement
 			Serial.println("\nSTART Command received");
 			break;
 		case STOP:
@@ -420,8 +441,10 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 void mqttConnect()
 {
 	while (!mqttClient.connected())
-	{
-		if (mqttClient.connect(cnfg->GetConfigChar("accessoryid"), cnfg->GetConfigChar("mqttusername"), cnfg->GetConfigChar("mqttpass")))
+	{ 
+		// Mqtt username and passwd was not updated by the UI !!!
+		
+		if (mqttClient.connect(cnfg->GetConfigChar("accessoryid"), cnfg->GetConfigChar("mqttusername"), cnfg->GetConfigChar("mqttpass")))	
 		{
 			Serial.println("\nMQTT Client Connected");
 			mqttSubscribe();
@@ -435,7 +458,7 @@ void mqttConnect()
 	}
 }
 
-char * temperaturePayload(float temperature, float humidity, float mintemp,	float maxtemp)
+char *temperaturePayload(float temperature, float humidity, float mintemp, float maxtemp)
 {
 	//
 	// Create Json Object as the MQTT Temperature Payload.
@@ -446,8 +469,8 @@ char * temperaturePayload(float temperature, float humidity, float mintemp,	floa
 	//
 	char buff[10];
 	DynamicJsonBuffer jsonBuffer;
-	JsonObject& root = jsonBuffer.createObject();
-	JsonArray& Data = root.createNestedArray("data");
+	JsonObject &root = jsonBuffer.createObject();
+	JsonArray &Data = root.createNestedArray("data");
 	root["accessoryid"] = cnfg->GetConfigString("accessoryid");
 	root["accessoryname"] = cnfg->GetConfigString("accessoryname");
 	root["accountid"] = cnfg->GetConfigString("account");
@@ -457,37 +480,35 @@ char * temperaturePayload(float temperature, float humidity, float mintemp,	floa
 
 	// Here we test for message type and
 	// generate relevant entries
-	JsonObject& Data1 = Data.createNestedObject();
-
+	JsonObject &Data1 = Data.createNestedObject();
 
 	Data1["name"] = "Current";
 	dtostrf(temperature, 5, 1, buff);
 	Data1["value"] = String(buff);
 
-	JsonObject& Data2 = Data.createNestedObject();
+	JsonObject &Data2 = Data.createNestedObject();
 	Data2["name"] = "Humidity";
 	dtostrf(humidity, 5, 1, buff);
 	Data2["value"] = String(buff);
 
-	JsonObject& Data3 = Data.createNestedObject();
+	JsonObject &Data3 = Data.createNestedObject();
 	Data3["name"] = "MIN";
 	dtostrf(mintemp, 5, 1, buff);
 	Data3["value"] = String(buff);
 
-	JsonObject& Data4 = Data.createNestedObject();
+	JsonObject &Data4 = Data.createNestedObject();
 	Data4["name"] = "MAX";
 	dtostrf(maxtemp, 5, 1, buff);
 	Data4["value"] = String(buff);
 
-
 	// Print Json object to char array
 	char jsonChar[MQTT_BUFFER_SIZE];
-	root.printTo((char*)jsonChar, root.measureLength() + 1);
-	
+	root.printTo((char *)jsonChar, root.measureLength() + 1);
+
 	return jsonChar;
 }
 
-char * commandPayload(String command)
+char *commandPayload(String command)
 {
 	//
 	// Create Json Object as the MQTT Temperature Payload.
@@ -498,8 +519,8 @@ char * commandPayload(String command)
 	//
 	char buff[10];
 	DynamicJsonBuffer jsonBuffer;
-	JsonObject& root = jsonBuffer.createObject();
-	JsonArray& Data = root.createNestedArray("data");
+	JsonObject &root = jsonBuffer.createObject();
+	JsonArray &Data = root.createNestedArray("data");
 	root["accessoryid"] = cnfg->GetConfigString("accessoryid");
 	root["accountid"] = cnfg->GetConfigString("account");
 	root["sketchname"] = cnfg->GetConfigString("sketchname");
@@ -509,20 +530,20 @@ char * commandPayload(String command)
 	// Here we test for message type and
 	// generate relevant entries
 
-	JsonObject& Data1 = Data.createNestedObject();
+	JsonObject &Data1 = Data.createNestedObject();
 	Data1["name"] = "Command";
 	Data1["value"] = "stop";
 
 	// Print Json object to char array
 	char jsonChar[MQTT_BUFFER_SIZE];
-	root.printTo((char*)jsonChar, root.measureLength() + 1);
+	root.printTo((char *)jsonChar, root.measureLength() + 1);
 
 	return jsonChar;
 }
 
 void mqttPublish()
 {
-	// 
+	//
 	// Publish a MQTT message, one with a simple string payload
 	// and one with a Json object as payload
 	//
@@ -541,11 +562,7 @@ void mqttSubscribe()
 	//
 	// Here you subscribe to Config messages
 	//
-	String sTopic = cnfg->GetConfigString("account") + "/" +
-		//cnfg->GetConfigString("accessorytype") 
-		"command" + "/" +
-		cnfg->GetConfigString("accessoryid");
-
+	String sTopic = cnfg->GetConfigString("account") + "/" + "command" + "/" + cnfg->GetConfigString("accessoryid");
 	mqttClient.subscribe(sTopic.c_str());
 	Serial.printf("\nMQTT Subscribed to %s", sTopic.c_str());
 }
@@ -562,7 +579,7 @@ void CallRestGet(String url)
 
 		http.begin(url);
 		int httpCode = http.GET();
-		
+
 		if (httpCode > 0)
 		{
 			String payload = http.getString();
@@ -592,7 +609,7 @@ String CallRestPost(String url)
 
 		// Create and initialize a Json Object
 		StaticJsonBuffer<300> jsonBuffer;
-		JsonObject& root = jsonBuffer.createObject();
+		JsonObject &root = jsonBuffer.createObject();
 		root["license"] = "{84F894B5-3C2E-4445-A9A2-B61572856F1C}";
 		root["owner"] = "Niels J. Nielsen";
 		root["email"] = "jagdriver@hotmail.com";
@@ -613,7 +630,7 @@ String CallRestPost(String url)
 			http.end();
 			return payload + " - " + httpCode;
 		}
-		http.end();  //Close connection
+		http.end(); //Close connection
 		return "No POST Response";
 	}
 }
@@ -626,7 +643,7 @@ String CallRestPut(String url)
 
 		// Create and initialize a Json Object
 		StaticJsonBuffer<300> jsonBuffer;
-		JsonObject& root = jsonBuffer.createObject();
+		JsonObject &root = jsonBuffer.createObject();
 		root["license"] = "{84F894B5-3C2E-4445-A9A2-B61572856F1C}";
 		root["owner"] = "Niels J. Nielsen";
 		root["email"] = "jagdriver@hotmail.com";
@@ -634,20 +651,19 @@ String CallRestPut(String url)
 
 		// Print Json object to char array
 		char jsonChar[300];
-		root.printTo((char*)jsonChar, root.measureLength() + 1);
+		root.printTo((char *)jsonChar, root.measureLength() + 1);
 
 		http.begin(url);
 		http.addHeader("Content-Type", "application/json");
-		int httpCode = http.sendRequest("PUT", (uint8_t*)jsonChar, strlen(jsonChar));
+		int httpCode = http.sendRequest("PUT", (uint8_t *)jsonChar, strlen(jsonChar));
 
 		String payload = http.getString();
 		if (httpCode > 0)
 		{
 			http.end();
 			return payload + " - " + httpCode;
-
 		}
-		http.end();  //Close connection
+		http.end(); //Close connection
 	}
 }
 
@@ -655,42 +671,46 @@ String CallRestPut(String url)
 
 #pragma region Utility functions
 
-bool str_to_uint16(const char *str, uint16_t *res) {
+bool str_to_uint16(const char *str, uint16_t *res)
+{
 	char *end;
 	errno = 0;
 	long val = strtol(str, &end, 10);
-	if (errno || end == str || *end != '\0' || val < 0 || val >= 0x10000) {
+	if (errno || end == str || *end != '\0' || val < 0 || val >= 0x10000)
+	{
 		return false;
 	}
 	*res = (uint16_t)val;
 	return true;
 }
 
-// String  var = getValue( StringVar, ',', 2); // if  a,4,D,r  would return D        
+// String  var = getValue( StringVar, ',', 2); // if  a,4,D,r  would return D
 String getSubString(String data, char separator, int index)
 {
 	int found = 0;
-	int strIndex[] = { 0, -1 };
+	int strIndex[] = {0, -1};
 	int maxIndex = data.length();
 
-	for (int i = 0; i <= maxIndex && found <= index; i++) {
-		if (data.charAt(i) == separator || i == maxIndex) {
+	for (int i = 0; i <= maxIndex && found <= index; i++)
+	{
+		if (data.charAt(i) == separator || i == maxIndex)
+		{
 			found++;
 			strIndex[0] = strIndex[1] + 1;
 			strIndex[1] = (i == maxIndex) ? i + 1 : i;
 		}
 	}
 	return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
-} 
+}
 
 IPAddress GetIPAddress(String name)
 {
 	String addressStr = cnfg->GetConfigString(name);
-	String byte1 = getSubString(addressStr,'.',0);
+	String byte1 = getSubString(addressStr, '.', 0);
 	String byte2 = getSubString(addressStr, '.', 1);
 	String byte3 = getSubString(addressStr, '.', 2);
 	String byte4 = getSubString(addressStr, '.', 3);
-	IPAddress address = { atoi(byte1.c_str()), atoi(byte2.c_str()), atoi(byte3.c_str()), atoi(byte4.c_str()) };
+	IPAddress address = {atoi(byte1.c_str()), atoi(byte2.c_str()), atoi(byte3.c_str()), atoi(byte4.c_str())};
 	return address;
 }
 
@@ -705,9 +725,11 @@ void setup()
 {
 	// --- Serial Connect ---
 	Serial.begin(115200);
-	while (!Serial);
+	while (!Serial)
+		;
 	Serial.print("\nSerial Connected ");
-
+    
+	
 	// Print Sketch name and version
 	Serial.println("Sketch: " + cnfg->GetConfigString("sketchname") + " Version: " + cnfg->GetConfigString("sketchversion"));
 
@@ -729,7 +751,7 @@ void setup()
 	e1 = WiFi.onStationModeGotIP(onSTAGotIP);
 	e2 = WiFi.onStationModeDisconnected(onSTADisconnected);
 	e3 = WiFi.onStationModeConnected(onSTAConnected);
-	
+
 	WiFi.disconnect();
 
 	if (cnfg->GetConfigString("clientwificonfig").equals("static"))
@@ -737,7 +759,7 @@ void setup()
 		WiFi.config(GetIPAddress("clientip"), GetIPAddress("clientgw"), GetIPAddress("clientsubnet"), GetIPAddress("clientdns1"), GetIPAddress("clientdns2"));
 	}
 
-	//WiFi.config(IPAddress(192,168,1,104), IPAddress(192,168,1,1), IPAddress(255,255,255,0), IPAddress(194,239,134,83), IPAddress(193,162,153,164));	
+	//WiFi.config(IPAddress(192,168,1,104), IPAddress(192,168,1,1), IPAddress(255,255,255,0), IPAddress(194,239,134,83), IPAddress(193,162,153,164));
 	WiFi.enableAP(false);
 	WiFi.enableSTA(true);
 	WiFi.begin(cnfg->GetConfigString("clientssid").c_str(), cnfg->GetConfigString("clientpass").c_str());
@@ -748,15 +770,15 @@ void setup()
 		delay(200);
 	}
 
-
-	// MQTT Message Broker Client Setup 
+	// MQTT Message Broker Client Setup
 	uint16_t port;
 	if (str_to_uint16(cnfg->GetConfigChar("mqttserverport"), &port))
 	{
-		mqttClient.setServer(cnfg->GetConfigChar("mqttserver"), port);
+		String serv = cnfg->GetConfigChar("mqttserver");
+		Serial.println("MqttServer: " + serv);
+		mqttClient.setServer("192.168.1.232", port);
 		mqttClient.setCallback(mqttCallback);
 	}
-	
 
 	// Test Publish and Subscribe...
 	//mqttConnect();
@@ -769,7 +791,7 @@ void setup()
 	//
 	//CallRestGet("http://" + cnfg->GetConfigString("restserver") + ":" + cnfg->GetConfigString("restserverport") + "/admin/log");
 	CallRestGet(cnfg->GetConfigString("restserver") + ":" + cnfg->GetConfigString("restserverport") + "/admin/test");
-	
+
 	// OS Timer Setup
 	firstTickOcurred = false;
 	secondTickOcurred = false;
@@ -802,13 +824,13 @@ void loop()
 		ticsSinceNTPUpdate = 0;
 
 		// Uncommebt to check for memory leak
-		//uint32_t freeHeap = ESP.getFreeHeap();
-		//Serial.printf("\nNTP Update, Free Heap %i", freeHeap);
+		uint32_t freeHeap = ESP.getFreeHeap();
+		Serial.printf("\nNTP Update, Free Heap %i", freeHeap);
 	}
 
 	if (secondTickOcurred == true)
 	{
-		// It's time to Sync NTP time with elapsed cpu tics 
+		// It's time to Sync NTP time with elapsed cpu tics
 		ntp_Sync(ticsSinceNTPUpdate);
 		secondTickOcurred = false;
 	}
